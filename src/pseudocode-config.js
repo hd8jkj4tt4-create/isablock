@@ -49,6 +49,12 @@ export const pseudocodeConfig = {
 
   COMMENT: '//',
 
+  FOR2: 'PER',
+  DECLARE: 'DICHIARA',
+  FUNCTION: 'FUNZIONE',
+  END_FUNCTION: 'FINE FUNZIONE',
+  RETURN: 'RESTITUISCI',
+
   INDENT: '   ',
 
   // Segnaposto mostrati quando un blocco ha uno slot vuoto: rendono

@@ -330,6 +330,38 @@ attesi. Serve a due cose: garantire che il profilo base resti identico a oggi, e
 intercettare le divergenze tra i tre output che le estensioni tendono a introdurre
 (indici, inizializzazione, formato di stampa, scope).
 
+## Import da codice (blocchi ← C/Python) — fatto per C
+
+Realizzato il percorso inverso **C → blocchi**: incollando codice C si ottengono i
+blocchi corrispondenti e i tre output si rigenerano (pseudocodice, C, Python). I blocchi
+così ottenuti sono gli stessi dell'editor, quindi il modello resta unico e l'export resta
+coerente (round-trip stabile testato sia in headless sia nel browser reale).
+
+Decisioni prese (2026-09-23):
+
+- **Parser dedicati, fuori dai generatori.** `src/parsers/c-to-blocks.js` e
+  `src/parsers/python-to-blocks.js` sono moduli separati (oggi usati da `src/main.js`,
+  scheda "Importa"). Il parser C è completo per i costrutti della Fase 1; il parser
+  Python è **abbozzato** (fanno parsing ma non trattano tutte le combinazioni) e va
+  completato se si vuole l'import Python.
+- **Minimalismo: un solo round-trip affidabile.** Dato che l'utente ha chiesto "solo C
+  per ora", il parser Python è incluso solo quanto basta a non rompere l'avvio
+  (è importato staticamente da `main.js`), non come funzione completa. Per collegare le
+  variabili ai blocchi `variable_get` si `varField` per nome: Blockly 13 richiede
+  `variableMap.getVariable(nome, tipo)` con **entrambi** gli argomenti.
+- **Semantica dei cicli `for` conservata all'import.** `controls_for_simple` di Blockly è
+  **inclusivo** (`<=`, stile "da 1 a N"); al round-trip viene usato soltanto per
+  condizioni `<=`. Una condizione `<` resta un blocco `controls_for_expr` generico,
+  altrimenti l'ultima iterazione cambierebbe (off-by-one).
+- **`printf("solo testo")`**: il testo si conserva senza a-capo finali; l'interprete
+  appende il proprio `\n`. I `\n`/`\t`/virgolette reali dentro i letterali vengono
+  riscopati (`esc`) per non far saltare il round-trip.
+- **Output atteso vs proprio**: import è un aiuto di editing, non un garante di identità
+  testuale; il criterio di stabilità è la **convergenza** (seconda rigenerazione uguale
+  alla terza), non l'uguaglianza col sorgente originale (le dichiarazioni multi-variabile
+  `int n, i;` si spezzano in blocchi `var_decl` distinti la prima volta e poi restano
+  stabili).
+
 ## Questioni aperte (riepilogo)
 
 1. Stringhe: si resta al livello A (solo messaggi) o serve il livello B (leggere

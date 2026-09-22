@@ -16,7 +16,10 @@ La colorazione sintattica dei tre output (parole chiave, numeri, commenti,
 stringhe/funzioni di libreria) legge anch'essa il testo già generato: non introduce
 una quarta implementazione indipendente da tenere sincronizzata con i tre
 generatori. Completano l'usabilità in laboratorio una guida rapida richiamabile in
-ogni momento e pannelli ridimensionabili in vista desktop. Prima di iniziare la
+ogni momento e pannelli ridimensionabili in vista desktop. Aggiunto anche
+l'**import da codice** (scheda "Importa"): incollando C si ottengono i blocchi
+corrispondenti — parser in `src/parsers/`, round-trip stabile verificato (vedi
+`DECISIONI-ESTENSIONI.md`, sezione "Import da codice"). Prima di iniziare la
 Fase 2, resta da validare l'uso in classe come indicato sotto.
 
 Obiettivo: uno strumento usabile in classe che copre tutti i costrutti elencati in

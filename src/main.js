@@ -264,6 +264,29 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
   });
 });
 
+import { CParser } from './parsers/c-to-blocks.js';
+import { PythonParser } from './parsers/python-to-blocks.js';
+
+document.getElementById('btnImport').addEventListener('click', () => {
+  const lang = document.getElementById('importLang').value;
+  const code = document.getElementById('importCode').value;
+  try {
+    let ws;
+    if (lang === 'c') {
+      ws = new CParser(code).parse();
+    } else {
+      ws = new PythonParser(code).parse();
+    }
+    workspace.clear();
+    Blockly.serialization.workspaces.load(ws, workspace);
+    enforceProgramBlock();
+    updateOutputs();
+    showToast('Codice importato in blocchi', 'success');
+  } catch (e) {
+    showToast('Errore nell\'importazione: ' + e.message, 'error');
+  }
+});
+
 document.querySelectorAll('.copy-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const text = document.getElementById(btn.dataset.copyTarget).textContent;
