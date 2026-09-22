@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IsaBlock</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="toolbar">
+    <div class="title-block">
+      <h1>IsaBlock</h1>
+      <p class="tagline">Tu metti la logica, il codice lo mettiamo noi.</p>
+    </div>
+    <div class="toolbar-actions">
+      <button id="btnNew" type="button">Nuovo</button>
+      <button id="btnSave" type="button">Salva</button>
+      <button id="btnLoad" type="button">Apri&hellip;</button>
+      <input id="fileInput" type="file" accept="application/json,.json" hidden />
+      <label class="example-picker">
+        Esempio:
+        <select id="exampleSelect">
+          <option value="">&mdash; scegli &mdash;</option>
+        </select>
+      </label>
+      <button id="btnHelp" type="button" class="help-btn" title="Apri la guida rapida">❓ Guida</button>
+    </div>
+  </header>
+
+  <div class="exec-bar">
+    <button id="btnRun" type="button" title="Esegui (Invio)">▶ Esegui</button>
+    <button id="btnStep" type="button" title="Passo (Spazio)">⏭ Passo</button>
+    <button id="btnStop" type="button" disabled title="Interrompi (Esc)">⏹ Interrompi</button>
+    <label class="exec-speed">
+      Velocità:
+      <select id="execSpeed">
+        <option value="800">Lenta</option>
+        <option value="350" selected>Normale</option>
+        <option value="120">Veloce</option>
+        <option value="0">Istantanea</option>
+      </select>
+    </label>
+    <span id="execStatus" class="exec-status">Pronto</span>
+  </div>
+
+  <main class="workspace-area">
+    <div id="blocklyDiv"></div>
+
+    <div id="blocksSplitter" class="splitter splitter-vertical" role="separator" aria-orientation="vertical" aria-label="Ridimensiona area blocchi e area codice" tabindex="0"></div>
+
+    <div class="outputs">
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" data-tab="pseudocode" type="button" role="tab" aria-selected="true">Pseudocodice</button>
+        <button class="tab-btn" data-tab="c" type="button" role="tab" aria-selected="false">C</button>
+        <button class="tab-btn" data-tab="python" type="button" role="tab" aria-selected="false">Python</button>
+      </div>
+      <div class="code-body">
+        <div class="code-panel active" data-tab="pseudocode">
+          <button class="copy-btn" data-copy-target="outputPseudocode" type="button">Copia</button>
+          <pre id="outputPseudocode" class="output-code"></pre>
+        </div>
+        <div class="code-panel" data-tab="c">
+          <button class="copy-btn" data-copy-target="outputC" type="button">Copia</button>
+          <pre id="outputC" class="output-code"></pre>
+        </div>
+        <div class="code-panel" data-tab="python">
+          <button class="copy-btn" data-copy-target="outputPython" type="button">Copia</button>
+          <pre id="outputPython" class="output-code"></pre>
+        </div>
+      </div>
+      <div id="runSplitter" class="splitter splitter-horizontal" role="separator" aria-orientation="horizontal" aria-label="Ridimensiona l'area di esecuzione" tabindex="0" hidden></div>
+      <div id="runStrip" class="run-strip" hidden>
+        <div class="run-strip-header">
+          <span>Esecuzione</span>
+          <button id="runStripClose" class="run-strip-close" type="button" aria-label="Chiudi il pannello di esecuzione">✕</button>
+        </div>
+        <div id="runConsole" class="run-console"></div>
+        <form id="runInputForm" class="run-input-form" hidden>
+          <label for="runInputField">Valore per LEGGI:</label>
+          <input id="runInputField" type="text" inputmode="numeric" autocomplete="off" />
+          <button type="submit">Invia</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">IsaBlock v<span id="appVersion"></span> &mdash; realizzato da Ivan Piasini con il supporto di Claude Code</footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="welcomeModal" class="modal" hidden>
+    <div class="modal-box">
+      <h2>Benvenuto su IsaBlock</h2>
+      <p>Componi un algoritmo trascinando i blocchi dalla tavolozza a sinistra dentro il blocco INIZIO&hellip;FINE. Pseudocodice, C e Python si aggiornano da soli a destra, sempre coerenti tra loro.</p>
+      <p>Non hai mai programmato prima? Nessun problema: carica l'esempio precaricato dal menu in alto per vedere subito come funziona, poi prova a modificarlo.</p>
+      <p>Se ti perdi, in alto trovi sempre il pulsante <strong>❓ Guida</strong>: apre delle spiegazioni con esempi che puoi rileggere quando vuoi.</p>
+      <div class="modal-actions">
+        <button id="welcomeAcceptBtn" class="modal-btn primary" type="button">Ho capito, iniziamo</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="helpModal" class="modal" hidden>
+    <div class="modal-box wide">
+      <button id="helpCloseBtn" class="modal-close" type="button" aria-label="Chiudi guida">✕</button>
+      <h2>Guida rapida</h2>
+
+      <section class="guide-section">
+        <h3>1. Trascina i blocchi dalla tavolozza</h3>
+        <p>A sinistra dell'area di lavoro trovi la <strong>tavolozza</strong>: le istruzioni disponibili, divise per categoria (Variabili e I/O, Numeri, Condizioni, Logica, Cicli, Commenti). Clicca su una categoria per aprirla, poi trascina il blocco che ti serve nell'area di lavoro.</p>
+      </section>
+
+      <section class="guide-section">
+        <h3>2. Incastra le istruzioni dentro INIZIO&hellip;FINE</h3>
+        <p>Il programma vive dentro un unico blocco <strong>INIZIO&hellip;FINE</strong>, sempre presente: non si cancella né si sposta. Le istruzioni si incastrano una sotto l'altra al suo interno, come i mattoncini di un gioco a incastro: un blocco si aggancia solo dove ha senso, così non puoi costruire qualcosa di sintatticamente sbagliato.</p>
+        <div class="mock-workspace">
+          <div class="mock-block mock-shell">INIZIO
+            <div class="mock-block mock-io">LEGGI n</div>
+            <div class="mock-block mock-io">SCRIVI n</div>
+          FINE</div>
+        </div>
+      </section>
+
+      <section class="guide-section">
+        <h3>3. Alcuni blocchi ne contengono altri</h3>
+        <p>I blocchi <strong>SE</strong>, <strong>MENTRE</strong>, <strong>PER</strong> e <strong>RIPETI</strong> hanno uno spazio vuoto al loro interno: lì dentro metti le istruzioni da eseguire solo in quel caso (o ripetutamente). Ci puoi incastrare quante istruzioni vuoi, anche un altro SE o un altro ciclo.</p>
+        <div class="mock-workspace">
+          <div class="mock-block mock-cond">SE n &gt; 0 ALLORA
+            <div class="mock-block mock-io">SCRIVI n</div>
+          FINE SE</div>
+        </div>
+      </section>
+
+      <section class="guide-section">
+        <h3>4. Tre output, sempre sincronizzati</h3>
+        <p>A destra trovi tre schede: <strong>Pseudocodice</strong>, <strong>C</strong>, <strong>Python</strong>. Mostrano lo stesso identico algoritmo tradotto in tre modi, e si aggiornano da sole mentre costruisci i blocchi. Il pulsante "Copia" in alto a ciascuna scheda copia il testo negli appunti.</p>
+      </section>
+
+      <section class="guide-section">
+        <h3>5. Esegui il tuo algoritmo passo-passo</h3>
+        <p>La barra sopra l'area di lavoro fa scorrere davvero la logica del tuo algoritmo, blocco per blocco: <strong>▶ Esegui</strong> avanza da solo, <strong>⏭ Passo</strong> avanza un blocco alla volta, <strong>⏹ Interrompi</strong> ferma tutto. Ci sono anche le scorciatoie da tastiera <strong>Invio</strong>, <strong>Spazio</strong> ed <strong>Esc</strong> (non funzionano mentre stai scrivendo in un campo di testo), e un menu <strong>Velocità</strong> per rallentare o accelerare l'esecuzione automatica. Il blocco attivo si illumina insieme alla riga corrispondente nei tre output, per capire cosa fa l'algoritmo passo dopo passo (non esegue davvero il C o il Python generati). Se incontri un blocco <strong>LEGGI</strong>, l'esecuzione si ferma e sotto al codice compare un pannello che ti chiede un numero — resta lì anche se cambi scheda tra Pseudocodice/C/Python.</p>
+      </section>
+
+      <section class="guide-section">
+        <h3>6. Salva il lavoro e riparti da un esempio</h3>
+        <p><strong>Salva</strong> scarica un file con il tuo programma; <strong>Apri&hellip;</strong> lo ricarica in una sessione successiva. Il menu <strong>Esempio</strong> in alto carica un algoritmo già pronto (massimo tra due numeri, somma, ricerca, fattoriale, primalità): utile per studiarne uno o partire da lì invece che da zero.</p>
+      </section>
+
+      <div class="modal-actions">
+        <button id="helpCloseBtn2" class="modal-btn primary" type="button">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blockly vendorizzato: file statici, nessuna dipendenza di rete. -->
+  <script src="vendor/blockly/blockly_compressed.js"></script>
+  <script src="vendor/blockly/msg/it.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

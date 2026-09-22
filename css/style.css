@@ -1,0 +1,687 @@
+:root {
+  color-scheme: light;
+  --border: #d7dce1;
+  --bg: #f4f6f8;
+  --panel-bg: #ffffff;
+  --text: #1f2933;
+  --accent: #4a6fa5;
+  --code-bg: #12222f;
+  --code-fg: #dce8f0;
+
+  /* Colorazione sintattica dei tre pannelli di output (vedi
+     src/codegen/highlight.js): pochi colori distinti, coerenti sui tre
+     linguaggi, cosi' lo stesso costrutto si riconosce a colpo d'occhio
+     passando da uno all'altro. */
+  --tok-keyword: #7fb2f0;
+  --tok-number: #f2b880;
+  --tok-string: #a8d98f;
+  --tok-comment: #8296a6;
+  --tok-builtin: #d9a8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-footer {
+  flex: none;
+  padding: 0.25rem 1rem;
+  font-size: 0.7rem;
+  color: var(--text);
+  opacity: 0.5;
+  text-align: center;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--border);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.title-block {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.toolbar h1 {
+  font-size: 1.1rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #52606d;
+  white-space: nowrap;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-actions button,
+.toolbar-actions select {
+  font-size: 0.95rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  cursor: pointer;
+}
+
+.toolbar-actions button:hover {
+  background: #eef1f4;
+}
+
+.example-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+/* --- Barra di esecuzione ------------------------------------------------ */
+.exec-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.exec-speed {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #52606d;
+}
+
+.exec-speed select {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  cursor: pointer;
+}
+
+.exec-bar button {
+  font-size: 0.9rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  cursor: pointer;
+}
+
+.exec-bar button:hover:not(:disabled) {
+  background: #eef1f4;
+}
+
+.exec-bar button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#btnRun {
+  border-color: #3fa66a;
+  color: #1e6b3f;
+}
+
+#btnStop {
+  border-color: #d9534f;
+  color: #a33328;
+}
+
+.exec-status {
+  font-size: 0.85rem;
+  color: #52606d;
+  margin-left: 0.25rem;
+}
+
+.workspace-area {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+#blocklyDiv {
+  flex: 1.4;
+  min-width: 0;
+  height: 100%;
+  transition: opacity 0.15s ease;
+}
+
+#blocklyDiv.exec-locked {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Rinforza l'evidenziazione nativa di Blockly (workspace.highlightBlock),
+   altrimenti troppo tenue rispetto a .exec-highlight nei pannelli di
+   codice: stesso colore, cosi' lo studente riconosce a colpo d'occhio che
+   e' lo stesso "passo" evidenziato in due punti diversi dello schermo. */
+.blocklyHighlighted .blocklyPath {
+  stroke: #f4c95d;
+  stroke-width: 3px;
+}
+
+/* --- Separatori trascinabili (solo vista desktop, vedi media query in
+   fondo al file) --------------------------------------------------------- */
+.splitter {
+  flex: none;
+  position: relative;
+  background: var(--border);
+  touch-action: none;
+}
+
+.splitter::after {
+  content: "";
+  position: absolute;
+}
+
+.splitter-vertical {
+  width: 5px;
+  cursor: col-resize;
+}
+
+.splitter-vertical::after {
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  right: -4px;
+}
+
+.splitter-horizontal {
+  height: 5px;
+  cursor: row-resize;
+}
+
+.splitter-horizontal::after {
+  left: 0;
+  right: 0;
+  top: -4px;
+  bottom: -4px;
+}
+
+.splitter:hover,
+.splitter:focus-visible,
+.splitter.dragging {
+  background: var(--accent);
+  outline: none;
+}
+
+.outputs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--code-bg);
+}
+
+.tabs {
+  display: flex;
+  flex: none;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #52606d;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+}
+
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.code-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.code-panel {
+  display: none;
+  height: 100%;
+}
+
+.code-panel.active {
+  display: block;
+}
+
+.output-code {
+  height: 100%;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  overflow: auto;
+  box-sizing: border-box;
+  color: var(--code-fg);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--code-fg);
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* --- Colorazione sintattica ---------------------------------------------
+   Classi applicate dal tokenizzatore in src/codegen/highlight.js: stesse
+   categorie (parola chiave, numero, stringa, commento, funzione di
+   libreria) sui tre output, per farli restare confrontabili a colpo
+   d'occhio. */
+.tok-keyword { color: var(--tok-keyword); }
+.tok-number { color: var(--tok-number); }
+.tok-string,
+.tok-preprocessor { color: var(--tok-string); }
+.tok-comment { color: var(--tok-comment); font-style: italic; }
+.tok-builtin { color: var(--tok-builtin); }
+
+/* --- Evidenziazione del blocco in esecuzione nei pannelli di codice ---- */
+.exec-highlight {
+  background: #f4c95d;
+  color: #12222f;
+  border-radius: 3px;
+  padding: 0 2px;
+  margin: 0 -2px;
+}
+
+/* Dentro l'evidenziazione dell'esecuzione i colori sintattici tornerebbero
+   poco leggibili sullo sfondo ambra: si torna al colore scuro del testo
+   evidenziato, uniforme come prima di introdurre la colorazione. */
+.exec-highlight [class^="tok-"] {
+  color: inherit;
+}
+
+/* --- Striscia di esecuzione (console) -----------------------------------
+   Fissa sotto le tre schede di codice, non una scheda a sua volta: resta
+   visibile qualunque sia la scheda aperta, cosi' non serve piu' cambiare
+   vista per rispondere a un LEGGI mentre si guarda il codice. */
+.run-strip {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  height: 220px;
+  border-top: 2px solid var(--border);
+  background: var(--code-bg);
+}
+
+.run-strip[hidden] {
+  display: none;
+}
+
+.run-strip-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--code-fg);
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.run-strip-close {
+  border: none;
+  background: none;
+  color: var(--code-fg);
+  opacity: 0.7;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+  cursor: pointer;
+}
+
+.run-strip-close:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.run-strip-close:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.run-console {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.9rem 1rem;
+  color: var(--code-fg);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.run-line {
+  white-space: pre-wrap;
+}
+
+.run-line.run-output::before {
+  content: "→ ";
+  opacity: 0.7;
+}
+
+.run-line.run-input {
+  color: #8fd0ff;
+}
+
+.run-line.run-error {
+  color: #ff9d8a;
+  font-weight: 600;
+}
+
+.run-input-form[hidden] {
+  display: none;
+}
+
+.run-input-form {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--code-fg);
+  font-size: 0.85rem;
+}
+
+.run-input-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--code-fg);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.run-input-form button {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--code-fg);
+  cursor: pointer;
+}
+
+.run-input-form button:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* --- Notifica toast --------------------------------------------------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%) translateY(10px);
+  max-width: calc(100vw - 2rem);
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success {
+  background: #e5f6ec;
+  border-color: #3fa66a;
+  color: #1e6b3f;
+}
+
+.toast.error {
+  background: #fdeceb;
+  border-color: #d9534f;
+  color: #a33328;
+}
+
+/* --- Modale (benvenuto e futuri usi) ----------------------------------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 33, 0.55);
+  z-index: 2000;
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: var(--panel-bg);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.modal-box.wide {
+  max-width: 720px;
+  text-align: left;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: #eef1f4;
+}
+
+.modal-box h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.modal-box p {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.modal-btn {
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.modal-btn:hover {
+  opacity: 0.9;
+}
+
+/* --- Guida rapida (helpModal) ------------------------------------------ */
+.help-btn {
+  font-weight: 600;
+}
+
+.guide-section {
+  margin-bottom: 1.25rem;
+}
+
+.guide-section h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+/* Piccoli "blocchi finti" solo illustrativi, negli stessi colori della
+   tavolozza reale (vedi src/blocks/toolbox.js), per dare un riferimento
+   visivo a chi fatica a immaginare l'incastro leggendo solo il testo. */
+.mock-workspace {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.mock-block {
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  margin: 0.3rem 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  color: #fff;
+  white-space: pre-line;
+}
+
+.mock-shell {
+  background: #52606d;
+}
+
+.mock-shell .mock-block {
+  margin-left: 1.25rem;
+}
+
+.mock-io {
+  background: #4a6fa5;
+}
+
+.mock-cond {
+  background: #5b8c5a;
+}
+
+.mock-cond .mock-block {
+  margin-left: 1.25rem;
+}
+
+@media (max-width: 480px) {
+  .modal-box {
+    padding: 1.1rem;
+  }
+  .toast {
+    width: calc(100% - 2rem);
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-area {
+    flex-direction: column;
+  }
+  #blocklyDiv {
+    height: 55vh;
+  }
+  .outputs {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+  .run-strip {
+    height: 160px;
+  }
+  /* Sotto i 900px i pannelli sono impilati con altezze fisse pensate per lo
+     schermo piccolo: trascinare un separatore col dito e' piu' scomodo che
+     utile in questa vista, quindi i separatori restano nascosti. */
+  .splitter {
+    display: none;
+  }
+}
