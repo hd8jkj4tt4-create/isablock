@@ -19,6 +19,7 @@ export const toolbox = {
         { kind: 'block', type: 'read' },
         { kind: 'block', type: 'write' },
         { kind: 'block', type: 'variable_get' },
+        { kind: 'block', type: 'var_decl' },
       ],
     },
     {
@@ -28,6 +29,7 @@ export const toolbox = {
       contents: [
         { kind: 'block', type: 'number_literal' },
         { kind: 'block', type: 'arith_op' },
+        { kind: 'block', type: 'incr_decr' },
       ],
     },
     {
@@ -52,12 +54,53 @@ export const toolbox = {
     },
     {
       kind: 'category',
+      name: 'Testi',
+      colour: '#e0a458',
+      contents: [
+        { kind: 'block', type: 'string_literal' },
+      ],
+    },
+    {
+      kind: 'category',
       name: 'Cicli',
       colour: '#8659a8',
       contents: [
         { kind: 'block', type: 'controls_while' },
+        { kind: 'block', type: 'controls_do_while' },
         { kind: 'block', type: 'controls_for_simple' },
+        { kind: 'block', type: 'controls_for_expr' },
         { kind: 'block', type: 'repeat_times' },
+      ],
+    },
+    {
+      kind: 'category',
+      name: 'Array',
+      colour: '#e0a458',
+      contents: [
+        { kind: 'block', type: 'array_decl' },
+        { kind: 'block', type: 'array_get' },
+        { kind: 'block', type: 'array_set' },
+      ],
+    },
+    {
+      kind: 'category',
+      name: 'Funzioni',
+      colour: '#4a6fa5',
+      contents: [
+        { kind: 'block', type: 'function_def' },
+        { kind: 'block', type: 'function_call' },
+        { kind: 'block', type: 'call_statement' },
+        { kind: 'block', type: 'param_decl' },
+        { kind: 'block', type: 'return_statement' },
+      ],
+    },
+    {
+      kind: 'category',
+      name: 'Controllo',
+      colour: '#5b8c5a',
+      contents: [
+        { kind: 'block', type: 'controls_break' },
+        { kind: 'block', type: 'controls_continue' },
       ],
     },
     {

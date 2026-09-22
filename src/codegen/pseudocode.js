@@ -114,5 +114,131 @@ export function createPseudocodeGenerator(Blockly, cfg) {
     return [value === 'TRUE' ? cfg.TRUE : cfg.FALSE, Order.ATOMIC];
   };
 
+  gen.forBlock['string_literal'] = function (block) {
+    const text = block.getFieldValue('TEXT');
+    return [`"${text.replace(/"/g, '\\"')}"`, Order.ATOMIC];
+  };
+
+  gen.forBlock['controls_do_while'] = function (block, generator) {
+    const body = generator.statementToCode(block, 'BODY');
+    const cond = generator.valueToCode(block, 'COND', Order.NONE) || cfg.MISSING_CONDITION;
+    return `RIPETI\n${body}FINCHÉ ${cond}\n`;
+  };
+
+  gen.forBlock['controls_break'] = function (block) {
+    return `${cfg.BREAK || 'INTERROMPI'}\n`;
+  };
+
+  gen.forBlock['controls_continue'] = function (block) {
+    return `${cfg.CONTINUE || 'CONTINUA'}\n`;
+  };
+
+  gen.forBlock['controls_for_expr'] = function (block, generator) {
+    const init = generator.statementToCode(block, 'INIT').trim().replace(/\n$/, '');
+    const cond = generator.valueToCode(block, 'COND', Order.NONE) || cfg.MISSING_CONDITION;
+    const update = generator.statementToCode(block, 'UPDATE').trim().replace(/\n$/, '');
+    const body = generator.statementToCode(block, 'BODY');
+    return `${cfg.FOR2} (${init}; ${cond}; ${update})\n${body}${cfg.END_FOR}\n`;
+  };
+
+  gen.forBlock['incr_decr'] = function (block, generator) {
+    const varCode = generator.valueToCode(block, 'VAR', Order.NONE) || cfg.MISSING_VALUE;
+    return block.getFieldValue('OP') === 'INC' ? `${varCode} ← ${varCode} + 1\n` : `${varCode} ← ${varCode} - 1\n`;
+  };
+
+  gen.forBlock['incr_expr'] = function (block) {
+    const variable = block.getField('VAR').getVariable();
+    return [`${varName(variable)} + 1`, Order.ADDITIVE];
+  };
+
+  gen.forBlock['decr_expr'] = function (block) {
+    const variable = block.getField('VAR').getVariable();
+    return [`${varName(variable)} - 1`, Order.ADDITIVE];
+  };
+
+  gen.forBlock['var_decl'] = function (block) {
+    const variable = block.getField('VAR').getVariable();
+    const typeName = block.getFieldValue('TYPE') === 'Boolean' ? 'booleana' : 'intera';
+    return `${cfg.DECLARE || 'DICHIARA'} ${varName(variable)} (${typeName})\n`;
+  };
+
+  gen.forBlock['array_decl'] = function (block, generator) {
+    const variable = block.getField('VAR').getVariable();
+    const size = generator.valueToCode(block, 'SIZE', Order.NONE) || cfg.MISSING_VALUE;
+    return `${cfg.DECLARE || 'DICHIARA'} ${varName(variable)}[${size}]\n`;
+  };
+
+  gen.forBlock['array_get'] = function (block, generator) {
+    const arr = generator.valueToCode(block, 'ARRAY', Order.NONE) || cfg.MISSING_VALUE;
+    const idx = generator.valueToCode(block, 'INDEX', Order.NONE) || cfg.MISSING_VALUE;
+    return [`${arr}[${idx}]`, Order.ATOMIC];
+  };
+
+  gen.forBlock['array_set'] = function (block, generator) {
+    const arr = generator.valueToCode(block, 'ARRAY', Order.NONE) || cfg.MISSING_VALUE;
+    const idx = generator.valueToCode(block, 'INDEX', Order.NONE) || cfg.MISSING_VALUE;
+    const value = generator.valueToCode(block, 'VALUE', Order.NONE) || cfg.MISSING_VALUE;
+    return `${arr}[${idx}] ← ${value}\n`;
+  };
+
+  gen.forBlock['function_def'] = function (block, generator) {
+    const fname = block.getFieldValue('NAME');
+    const paramBlocks = block.getInputTargetBlock('PARAMS');
+    const params = [];
+    let cur = paramBlocks;
+    while (cur) {
+      if (cur.type === 'param_decl') params.push(cur.getFieldValue('NAME'));
+      cur = cur.getNextBlock();
+    }
+    const body = generator.statementToCode(block, 'BODY');
+    return `${cfg.FUNCTION || 'FUNZIONE'} ${fname}(${params.join(', ')})\n${body}${cfg.END_FUNCTION || 'FINE FUNZIONE'}\n`;
+  };
+
+  gen.forBlock['param_decl'] = function (block) {
+    return block.getFieldValue('NAME');
+  };
+
+  gen.forBlock['function_call'] = function (block, generator) {
+    const fname = block.getFieldValue('NAME');
+    const argBlocks = block.getInputTargetBlock('ARGS');
+    const args = collectArgs(argBlocks, generator);
+    return [`${fname}(${args.join(', ')})`, Order.ATOMIC];
+  };
+
+  gen.forBlock['call_statement'] = function (block, generator) {
+    const fname = block.getFieldValue('NAME');
+    const argBlocks = block.getInputTargetBlock('ARGS');
+    const args = collectArgs(argBlocks, generator);
+    return `${fname}(${args.join(', ')})\n`;
+  };
+
+  gen.forBlock['function_arg'] = function (block, generator) {
+    const v = generator.valueToCode(block, 'VALUE', Order.NONE) || cfg.MISSING_VALUE;
+    return [v, Order.NONE];
+  };
+
+  gen.forBlock['return_statement'] = function (block, generator) {
+    const value = generator.valueToCode(block, 'VALUE', Order.NONE);
+    return `${cfg.RETURN || 'RESTITUISCI'} ${value || ''}\n`;
+  };
+
+  gen.forBlock['string_concat'] = function (block, generator) {
+    const a = generator.valueToCode(block, 'A', Order.NONE) || '';
+    const b = generator.valueToCode(block, 'B', Order.NONE) || cfg.MISSING_VALUE;
+    return [`${a} + ${b}`, Order.ADDITIVE];
+  };
+
   return gen;
+}
+
+function collectArgs(firstArgBlock, generator) {
+  const out = [];
+  let cur = firstArgBlock;
+  while (cur) {
+    if (cur.type === 'function_arg') {
+      out.push(generator.valueToCode(cur, 'VALUE', Order.NONE) || '0');
+    }
+    cur = cur.getNextBlock();
+  }
+  return out;
 }
